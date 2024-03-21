@@ -69,7 +69,7 @@ def play_step(board, player, action):
 
     return next_state, reward, done
 
-def train_dqn(num_episodes=10000):
+def train_dqn(num_episodes=1000000):
     """DQNを用いてエージェントを訓練するメイン関数。"""
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
