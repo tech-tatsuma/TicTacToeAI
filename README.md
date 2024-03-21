@@ -17,3 +17,5 @@ python battle_aisennkou.py
 ```bash
 python battle_aikoukou.py
 ```
+## 参考文献
+- https://arxiv.org/abs/1312.5602
