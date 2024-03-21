@@ -3,10 +3,40 @@ from games.tictactoe import initialize_board, print_board, player_move, check_wi
 from models.dqn import DQN
 from trains.train import to_tensor
 
+def prevent_win(board):
+    """
+    敵が勝利する手を防ぐ行動を特定する関数。
+    """
+    for i in range(3):
+        row = board[i]
+        if row.count('0') == 2 and row.count(' ') == 1:
+            return i, row.index(' ')  # 空きセルの位置を返す
+        col = [board[j][i] for j in range(3)]
+        if col.count('0') == 2 and col.count(' ') == 1:
+            return col.index(' '), i  # 空きセルの位置を返す
+
+    # 斜めの確認
+    diag1 = [board[i][i] for i in range(3)]
+    if diag1.count('0') == 2 and diag1.count(' ') == 1:
+        return diag1.index(' '), diag1.index(' ')  # 空きセルの位置を返す
+
+    diag2 = [board[i][2-i] for i in range(3)]
+    if diag2.count('0') == 2 and diag2.count(' ') == 1:
+        return diag2.index(' '), 2-diag2.index(' ')  # 空きセルの位置を返す
+
+    return None
+
 def ai_move(board, model, device='cpu'):
     """
     AIが次の行動を決定する関数。
     """
+
+    # 敵が勝利する手を防ぐ行動を最優先で選択
+    prevent_action = prevent_win(board)
+    if prevent_action is not None:
+        print(f"Prevent win at row, col = {prevent_action}")
+        return prevent_action
+    
     # 盤面をテンソルに変換し、適切なデバイスに移動
     state = to_tensor(board).to(device)
     # モデルを評価モードに設定
