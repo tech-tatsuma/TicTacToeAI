@@ -26,10 +26,39 @@ def prevent_win(board):
 
     return None
 
+def find_winning_move(board):
+    """
+    自分が勝利する手を特定する関数。
+    """
+    for i in range(3):
+        row = board[i]
+        if row.count('0') == 2 and row.count(' ') == 1:
+            return i, row.index(' ')  # 勝利への最後の空きセルの位置を返す
+        col = [board[j][i] for j in range(3)]
+        if col.count('0') == 2 and col.count(' ') == 1:
+            return col.index(' '), i  # 勝利への最後の空きセルの位置を返す
+
+    # 斜めの確認
+    diag1 = [board[i][i] for i in range(3)]
+    if diag1.count('0') == 2 and diag1.count(' ') == 1:
+        return diag1.index(' '), diag1.index(' ')  # 勝利への最後の空きセルの位置を返す
+
+    diag2 = [board[i][2-i] for i in range(3)]
+    if diag2.count('0') == 2 and diag2.count(' ') == 1:
+        return diag2.index(' '), 2-diag2.index(' ')  # 勝利への最後の空きセルの位置を返す
+
+    return None
+
 def ai_move(board, model, device='cpu'):
     """
     AIが次の行動を決定する関数。
     """
+
+    # 自分が勝利する手を最優先で選択
+    winning_action = find_winning_move(board)
+    if winning_action is not None:
+        print(f"Winning move at row, col = {winning_action}")
+        return winning_action
 
     # 敵が勝利する手を防ぐ行動を最優先で選択
     prevent_action = prevent_win(board)
@@ -72,7 +101,7 @@ if __name__ == '__main__':
     while True:
         print_board(board)
         if current_player == 2:
-            print("AI君の順番です")
+            print("Tatsuma AIの順番です")
             # AIの行動を取得
             row, col = ai_move(board, ai_model, device)
             # AIの行動を盤面に適用
