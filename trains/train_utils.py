@@ -43,6 +43,8 @@ def optimize_model(memory, policy_net, target_net, optimizer, BATCH_SIZE, GAMMA,
     # メモリに十分なトランジション（経験）が蓄積されていなければ，何もせずに関数を終了
     if len(memory) < BATCH_SIZE:
         return
+    # 訓練モードに設定
+    policy_net.train()
     
     # 経験再生メモリからランダムにトランジションのバッチをサンプリング
     transitions = memory.sample(BATCH_SIZE)
