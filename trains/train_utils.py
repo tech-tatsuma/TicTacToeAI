@@ -20,6 +20,29 @@ LR = 0.001  # 学習率
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
+def find_winning_move(board):
+    """
+    AI自身が勝利する手を特定する関数。この修正版ではboardが数値型のnumpy.ndarrayであると想定。
+    """
+    for i in range(3):
+        row = board[i, :]
+        if np.count_nonzero(row == 1) == 2 and np.count_nonzero(row == 0) == 1:
+            return i, np.where(row == 0)[0][0]  # 勝利への最後の空きセルの位置を返す
+        col = board[:, i]
+        if np.count_nonzero(col == 1) == 2 and np.count_nonzero(col == 0) == 1:
+            return np.where(col == 0)[0][0], i  # 勝利への最後の空きセルの位置を返す
+
+    # 斜めの確認
+    diag1 = board.diagonal()
+    if np.count_nonzero(diag1 == 1) == 2 and np.count_nonzero(diag1 == 0) == 1:
+        return np.where(diag1 == 0)[0][0], np.where(diag1 == 0)[0][0]  # 勝利への最後の空きセルの位置を返す
+
+    diag2 = np.fliplr(board).diagonal()
+    if np.count_nonzero(diag2 == 1) == 2 and np.count_nonzero(diag2 == 0) == 1:
+        return np.where(diag2 == 0)[0][0], 2 - np.where(diag2 == 0)[0][0]  # 勝利への最後の空きセルの位置を返す
+
+    return None
+
 def prevent_win(board):
     """
     敵が勝利する手を防ぐ行動を特定する関数。この修正版ではboardが数値型のnumpy.ndarrayであると想定。
@@ -108,6 +131,13 @@ def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, 
 
     # stateを3x3の盤面形式に変換
     board = state.view(3, 3).cpu().numpy()
+
+    # 自分が勝利する手があるか確認
+    winning_move = find_winning_move(board)
+    if winning_move is not None:
+        # 勝利する行動を返す
+        action_index = winning_move[0] * 3 + winning_move[1]
+        return torch.tensor([[action_index]], device=device, dtype=torch.long)
 
     # 敵の勝利を防ぐ手があるか確認
     action = prevent_win(board)
