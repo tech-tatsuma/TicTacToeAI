@@ -12,13 +12,36 @@ EPS_START = 0.9  # 探索の開始確率．最初はランダムに行動を選�
 EPS_END = 0.05  # 探索の最小確率．時間が経つにつれてランダムに行動を選択する確率を減らす．
 EPS_DECAY = 200  # 探索率の減衰率．この値が大きいほど探索期間が長くなる．
 TARGET_UPDATE = 10  # ターゲットネットワークの更新間隔（エピソード数）
-MEMORY_SIZE = 10000  # 経験再生バッファのサイズ．過去の経験をどれだけ保持するか．
+MEMORY_SIZE = 15000  # 経験再生バッファのサイズ．過去の経験をどれだけ保持するか．
 BATCH_SIZE = 128  # バッチサイズ．一度に学習するデータの数．
 LR = 0.001  # 学習率
 
 # 経験再生バッファで使うためのトランジションを定義
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
+
+def prevent_win(board):
+    """
+    敵が勝利する手を防ぐ行動を特定する関数。この修正版ではboardが数値型のnumpy.ndarrayであると想定。
+    """
+    for i in range(3):
+        row = board[i, :]
+        if np.count_nonzero(row == 2) == 2 and np.count_nonzero(row == 0) == 1:
+            return i, np.where(row == 0)[0][0]  # 空きセルの位置を返す
+        col = board[:, i]
+        if np.count_nonzero(col == 2) == 2 and np.count_nonzero(col == 0) == 1:
+            return np.where(col == 0)[0][0], i  # 空きセルの位置を返す
+
+    # 斜めの確認
+    diag1 = board.diagonal()
+    if np.count_nonzero(diag1 == 2) == 2 and np.count_nonzero(diag1 == 0) == 1:
+        return np.where(diag1 == 0)[0][0], np.where(diag1 == 0)[0][0]  # 空きセルの位置を返す
+
+    diag2 = np.fliplr(board).diagonal()
+    if np.count_nonzero(diag2 == 2) == 2 and np.count_nonzero(diag2 == 0) == 1:
+        return np.where(diag2 == 0)[0][0], 2 - np.where(diag2 == 0)[0][0]  # 空きセルの位置を返す
+
+    return None
 
 class ReplayMemory(object):
     """経験再生バッファ"""
@@ -82,6 +105,16 @@ def optimize_model(memory, policy_net, target_net, optimizer, BATCH_SIZE, GAMMA,
     optimizer.step() # パラメータを更新
 
 def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device):
+
+    # stateを3x3の盤面形式に変換
+    board = state.view(3, 3).cpu().numpy()
+
+    # 敵の勝利を防ぐ手があるか確認
+    action = prevent_win(board)
+    if action is not None:
+        # 敵の勝利を防ぐ行動を返す
+        return torch.tensor([[action]], device=device, dtype=torch.long)
+    
     # ランダムな値を取得
     sample = random.random()
 
