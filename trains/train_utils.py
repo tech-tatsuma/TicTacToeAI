@@ -79,7 +79,7 @@ def optimize_model(memory, policy_net, target_net, optimizer, BATCH_SIZE, GAMMA,
     loss.backward() # バックプロパゲーションを用いて勾配を計算
     optimizer.step() # パラメータを更新
 
-def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY):
+def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device):
     # ランダムな値を取得
     sample = random.random()
 
@@ -88,17 +88,17 @@ def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY):
     eps_threshold = EPS_END + (EPS_START - EPS_END) * np.exp(-1. * steps_done / EPS_DECAY)
 
     # ランダムな値が閾値よりも大きい場合は，ネットワークの予測に基づく行動を選択
+    with torch.no_grad():
+        q_values = policy_net(state)
+
+    available_actions = [i for i in range(9) if state.flatten()[i] == 0]
+    q_values_available = q_values[0, available_actions]
+
     if sample > eps_threshold:
-        with torch.no_grad():
-            # ネットワークの出力から最大値を持つ行動を選択
-            return policy_net(state).max(1)[1].view(1, 1)
+        # 空のセルの中で一番勝つ確率が高いものを選択
+        action = available_actions[torch.argmax(q_values_available).item()]
     else:
-        # ランダムな値が閾値以下の場合は，ランダムな行動を選択
-        # ただし，選択可能な（まだ選ばれていない）セルのみから選ぶ
-        available_actions = [i for i in range(9) if state.flatten()[i] == 0]
-        if available_actions:
-            # 空のセルがある場合は，その中からランダムに選択
-            return torch.tensor([[random.choice(available_actions)]], dtype=torch.long)
-        else:
-            # 万が一全てのセルが埋まっている場合は，全範囲からランダムに選択（通常は発生しない）
-            return torch.tensor([[random.randrange(9)]], dtype=torch.long)
+        # ランダムに行動を選択（空いているセルから）
+        action = random.choice(available_actions)
+
+    return torch.tensor([[action]], device=device, dtype=torch.long)

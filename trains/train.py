@@ -26,9 +26,9 @@ def to_tensor(board):
     state = [0 if cell == ' ' else 1 if cell == 'X' else -1 for row in board for cell in row]
     return torch.tensor(state, dtype=torch.float).unsqueeze(0)  # バッチ次元を追加
 
-def choose_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY):
+def choose_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device):
     """エージェントが行動を選択する関数。ランダムまたはポリシーに基づく行動選択を行う。"""
-    return select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY)
+    return select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device)
 
 def play_step(board, player, action):
     """選択した行動を盤面に適用し、次の状態、報酬、ゲームの終了フラグを返す関数。
@@ -111,13 +111,13 @@ def train_dqn(num_episodes=10000):
             # 現在のプレイヤーに応じて行動を選択
             if current_player == 1:
                 state = state.to(device)
-                action = choose_action(state, policy_net_1, steps_done, EPS_START, EPS_END, EPS_DECAY)
+                action = choose_action(state, policy_net_1, steps_done, EPS_START, EPS_END, EPS_DECAY, device)
                 optimizer = optimizer_1
                 policy_net = policy_net_1
                 target_net = target_net_1
             else:
                 state = state.to(device)
-                action = choose_action(state, policy_net_2, steps_done, EPS_START, EPS_END, EPS_DECAY)
+                action = choose_action(state, policy_net_2, steps_done, EPS_START, EPS_END, EPS_DECAY, device)
                 optimizer = optimizer_2
                 policy_net = policy_net_2
                 target_net = target_net_2
