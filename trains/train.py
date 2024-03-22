@@ -10,8 +10,7 @@ from games.tictactoe import initialize_board, print_board, player_move, check_wi
 from trains.train_utils import select_action, optimize_model, ReplayMemory
 from models.dqn import DQN
 
-# その他の必要なインポートと変数の初期化
-
+# 変数の初期化
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 200
@@ -26,9 +25,9 @@ def to_tensor(board):
     state = [0 if cell == ' ' else 1 if cell == 'X' else -1 for row in board for cell in row]
     return torch.tensor(state, dtype=torch.float).unsqueeze(0)  # バッチ次元を追加
 
-def choose_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device):
+def choose_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device, symbol):
     """エージェントが行動を選択する関数。ランダムまたはポリシーに基づく行動選択を行う。"""
-    return select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device)
+    return select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device, symbol)
 
 def play_step(board, player, action):
     """選択した行動を盤面に適用し、次の状態、報酬、ゲームの終了フラグを返す関数。
@@ -110,15 +109,27 @@ def train_dqn(num_episodes=1000000):
             # エージェントに行動を選択させる
             # 現在のプレイヤーに応じて行動を選択
             if current_player == 1:
+                # symbolの設定
+                symbol = 1
+                # 状態をデバイスに移動
                 state = state.to(device)
-                action = choose_action(state, policy_net_1, steps_done, EPS_START, EPS_END, EPS_DECAY, device)
+                # 行動の選択
+                action = choose_action(state, policy_net_1, steps_done, EPS_START, EPS_END, EPS_DECAY, device, symbol)
+                # optimizerの設定
                 optimizer = optimizer_1
+                # ネットワークの設定
                 policy_net = policy_net_1
                 target_net = target_net_1
             else:
+                # symbolの設定
+                symbol = -1
+                # 状態をデバイスに移動
                 state = state.to(device)
-                action = choose_action(state, policy_net_2, steps_done, EPS_START, EPS_END, EPS_DECAY, device)
+                # 行動の選択
+                action = choose_action(state, policy_net_2, steps_done, EPS_START, EPS_END, EPS_DECAY, device, symbol)
+                # optimizerの設定
                 optimizer = optimizer_2
+                # ネットワークの設定
                 policy_net = policy_net_2
                 target_net = target_net_2
 

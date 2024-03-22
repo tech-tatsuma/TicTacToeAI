@@ -20,49 +20,56 @@ LR = 0.001  # 学習率
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
-def find_winning_move(board):
+def find_winning_move(board, ai_symbol):
     """
     AI自身が勝利する手を特定する関数。この修正版ではboardが数値型のnumpy.ndarrayであると想定。
     """
+    # 3回繰り返す(盤面が3*3であるため)
     for i in range(3):
+        # 列データを取り出す
         row = board[i, :]
-        if np.count_nonzero(row == 1) == 2 and np.count_nonzero(row == 0) == 1:
+        if np.count_nonzero(row == ai_symbol) == 2 and np.count_nonzero(row == 0) == 1:
             return i, np.where(row == 0)[0][0]  # 勝利への最後の空きセルの位置を返す
         col = board[:, i]
-        if np.count_nonzero(col == 1) == 2 and np.count_nonzero(col == 0) == 1:
+        if np.count_nonzero(col == ai_symbol) == 2 and np.count_nonzero(col == 0) == 1:
             return np.where(col == 0)[0][0], i  # 勝利への最後の空きセルの位置を返す
 
     # 斜めの確認
     diag1 = board.diagonal()
-    if np.count_nonzero(diag1 == 1) == 2 and np.count_nonzero(diag1 == 0) == 1:
+    if np.count_nonzero(diag1 == ai_symbol) == 2 and np.count_nonzero(diag1 == 0) == 1:
         return np.where(diag1 == 0)[0][0], np.where(diag1 == 0)[0][0]  # 勝利への最後の空きセルの位置を返す
 
     diag2 = np.fliplr(board).diagonal()
-    if np.count_nonzero(diag2 == 1) == 2 and np.count_nonzero(diag2 == 0) == 1:
+    if np.count_nonzero(diag2 == ai_symbol) == 2 and np.count_nonzero(diag2 == 0) == 1:
         return np.where(diag2 == 0)[0][0], 2 - np.where(diag2 == 0)[0][0]  # 勝利への最後の空きセルの位置を返す
 
     return None
 
-def prevent_win(board):
+def prevent_win(board, ai_symbol):
     """
-    敵が勝利する手を防ぐ行動を特定する関数。この修正版ではboardが数値型のnumpy.ndarrayであると想定。
+    敵が勝利する手を防ぐ行動を特定する関数。
+    board: ゲームの盤面（数値型のnumpy.ndarray）
+    ai_symbol: AIが使用するシンボルの内部表現（1または-1）
     """
+    # 敵プレイヤーのシンボルを特定する
+    enemy_symbol = -ai_symbol
+
     for i in range(3):
         row = board[i, :]
-        if np.count_nonzero(row == 2) == 2 and np.count_nonzero(row == 0) == 1:
-            return i, np.where(row == 0)[0][0]  # 空きセルの位置を返す
+        if np.count_nonzero(row == enemy_symbol) == 2 and np.count_nonzero(row == 0) == 1:
+            return i, np.where(row == 0)[0][0]  # 敵の勝利を防ぐ空きセルの位置を返す
         col = board[:, i]
-        if np.count_nonzero(col == 2) == 2 and np.count_nonzero(col == 0) == 1:
-            return np.where(col == 0)[0][0], i  # 空きセルの位置を返す
+        if np.count_nonzero(col == enemy_symbol) == 2 and np.count_nonzero(col == 0) == 1:
+            return np.where(col == 0)[0][0], i  # 敵の勝利を防ぐ空きセルの位置を返す
 
     # 斜めの確認
     diag1 = board.diagonal()
-    if np.count_nonzero(diag1 == 2) == 2 and np.count_nonzero(diag1 == 0) == 1:
-        return np.where(diag1 == 0)[0][0], np.where(diag1 == 0)[0][0]  # 空きセルの位置を返す
+    if np.count_nonzero(diag1 == enemy_symbol) == 2 and np.count_nonzero(diag1 == 0) == 1:
+        return np.where(diag1 == 0)[0][0], np.where(diag1 == 0)[0][0]  # 敵の勝利を防ぐ空きセルの位置を返す
 
     diag2 = np.fliplr(board).diagonal()
-    if np.count_nonzero(diag2 == 2) == 2 and np.count_nonzero(diag2 == 0) == 1:
-        return np.where(diag2 == 0)[0][0], 2 - np.where(diag2 == 0)[0][0]  # 空きセルの位置を返す
+    if np.count_nonzero(diag2 == enemy_symbol) == 2 and np.count_nonzero(diag2 == 0) == 1:
+        return np.where(diag2 == 0)[0][0], 2 - np.where(diag2 == 0)[0][0]  # 敵の勝利を防ぐ空きセルの位置を返す
 
     return None
 
@@ -127,23 +134,24 @@ def optimize_model(memory, policy_net, target_net, optimizer, BATCH_SIZE, GAMMA,
     loss.backward() # バックプロパゲーションを用いて勾配を計算
     optimizer.step() # パラメータを更新
 
-def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device):
+def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device, symbol):
 
     # stateを3x3の盤面形式に変換
     board = state.view(3, 3).cpu().numpy()
 
     # 自分が勝利する手があるか確認
-    winning_move = find_winning_move(board)
+    winning_move = find_winning_move(board, symbol)
     if winning_move is not None:
         # 勝利する行動を返す
         action_index = winning_move[0] * 3 + winning_move[1]
         return torch.tensor([[action_index]], device=device, dtype=torch.long)
 
     # 敵の勝利を防ぐ手があるか確認
-    action = prevent_win(board)
+    action = prevent_win(board, symbol)
     if action is not None:
         # 敵の勝利を防ぐ行動を返す
-        return torch.tensor([[action]], device=device, dtype=torch.long)
+        action_index = action[0] * 3 + action[1] 
+        return torch.tensor([[action_index]], device=device, dtype=torch.long)
     
     # ランダムな値を取得
     sample = random.random()
@@ -165,5 +173,37 @@ def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, 
     else:
         # ランダムに行動を選択（空いているセルから）
         action = random.choice(available_actions)
+
+    return torch.tensor([[action]], device=device, dtype=torch.long)
+
+def select_action_rlhf(state, policy_net, device, symbol):
+
+    # stateを3x3の盤面形式に変換
+    board = state.view(3, 3).cpu().numpy()
+
+    # 自分が勝利する手があるか確認
+    winning_move = find_winning_move(board, symbol)
+    if winning_move is not None:
+        # 勝利する行動を返す
+        action_index = winning_move[0] * 3 + winning_move[1]
+        return torch.tensor([[action_index]], device=device, dtype=torch.long)
+
+    # 敵の勝利を防ぐ手があるか確認
+    action = prevent_win(board, symbol)
+    if action is not None:
+        # 敵の勝利を防ぐ行動を返す
+        action_index = action[0] * 3 + action[1] 
+        return torch.tensor([[action_index]], device=device, dtype=torch.long)
+    
+
+    # ランダムな値が閾値よりも大きい場合は，ネットワークの予測に基づく行動を選択
+    with torch.no_grad():
+        q_values = policy_net(state)
+
+    available_actions = [i for i in range(9) if state.flatten()[i] == 0]
+    q_values_available = q_values[0, available_actions]
+
+    # 空のセルの中で一番勝つ確率が高いものを選択
+    action = available_actions[torch.argmax(q_values_available).item()]
 
     return torch.tensor([[action]], device=device, dtype=torch.long)
