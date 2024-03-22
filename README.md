@@ -1,21 +1,23 @@
 # TicTacToeAI
-## 概要
-本プロジェクトは三目並べを行うゲームAIを強化学習を用いて実装するものである．強化学習にはAIとAIを対戦させながら学習させていく手法と人間とのインタラクションを通して学習していくRLHFを採用している．
-## スクリプト
-- trains/train.py：２つのAIが対戦しながら学習を行なっていくためのスクリプト
-- battle_aisennkou.py：AIと人間が対戦するためのスクリプト．このスクリプトではAIが先攻．
-- battle_aikoukou.py：AIと人間が対戦するためのスクリプト．このスクリプトではAIが後攻．
-## 利用方法
-1. まず，trainsディレクトリにカレントディレクトリを移動し，train.pyスクリプトを実行する．
+## Overview
+This project implements a game AI for playing Tic-Tac-Toe using reinforcement learning. The reinforcement learning methods employed include training through matches between two AIs and RLHF (Reinforcement Learning with Human Feedback), where learning occurs through interactions with humans.
+## Scripts
+- trains/train.py: A script for training through matches between two AIs.
+- trains/rlhf_aisennkou.py: A script for enhancing the AI through matches against humans, with the AI playing first.
+- trains/rlhf_aikoukou.py: A script for enhancing the AI through matches against humans, with the AI playing second.
+- battle_aisennkou.py: A script for playing matches against the AI, with the AI playing first.
+- battle_aikoukou.py: A script for playing matches against the AI, with the AI playing second.
+## How to Use
+1. First, move to the trains directory and execute the train.py script.
 ```bash
 python train.py
 ```
-2. 訓練が終了するとbattle_aisennkou.pyとbattle_aikoukou.pyスクリプトを実行することで学習済みのAIと対戦できる．
+2. After training is complete, you can play against the trained AI by executing the battle_aisennkou.py and battle_aikoukou.py scripts.
 ```bash
 python battle_aisennkou.py
 ```
 ```bash
 python battle_aikoukou.py
 ```
-## 参考文献
+## References
 - https://arxiv.org/abs/1312.5602
