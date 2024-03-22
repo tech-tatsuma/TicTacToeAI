@@ -27,19 +27,19 @@ def prevent_win(board):
     """
     for i in range(3):
         row = board[i]
-        if row.count('0') == 2 and row.count(' ') == 1:
+        if row.count('X') == 2 and row.count(' ') == 1:
             return i, row.index(' ')  # 空きセルの位置を返す
         col = [board[j][i] for j in range(3)]
-        if col.count('0') == 2 and col.count(' ') == 1:
+        if col.count('X') == 2 and col.count(' ') == 1:
             return col.index(' '), i  # 空きセルの位置を返す
 
     # 斜めの確認
     diag1 = [board[i][i] for i in range(3)]
-    if diag1.count('0') == 2 and diag1.count(' ') == 1:
+    if diag1.count('X') == 2 and diag1.count(' ') == 1:
         return diag1.index(' '), diag1.index(' ')  # 空きセルの位置を返す
 
     diag2 = [board[i][2-i] for i in range(3)]
-    if diag2.count('0') == 2 and diag2.count(' ') == 1:
+    if diag2.count('X') == 2 and diag2.count(' ') == 1:
         return diag2.index(' '), 2-diag2.index(' ')  # 空きセルの位置を返す
 
     return None
@@ -50,19 +50,19 @@ def find_winning_move(board):
     """
     for i in range(3):
         row = board[i]
-        if row.count('0') == 2 and row.count(' ') == 1:
+        if row.count('O') == 2 and row.count(' ') == 1:
             return i, row.index(' ')  # 勝利への最後の空きセルの位置を返す
         col = [board[j][i] for j in range(3)]
-        if col.count('0') == 2 and col.count(' ') == 1:
+        if col.count('O') == 2 and col.count(' ') == 1:
             return col.index(' '), i  # 勝利への最後の空きセルの位置を返す
 
     # 斜めの確認
     diag1 = [board[i][i] for i in range(3)]
-    if diag1.count('0') == 2 and diag1.count(' ') == 1:
+    if diag1.count('O') == 2 and diag1.count(' ') == 1:
         return diag1.index(' '), diag1.index(' ')  # 勝利への最後の空きセルの位置を返す
 
     diag2 = [board[i][2-i] for i in range(3)]
-    if diag2.count('0') == 2 and diag2.count(' ') == 1:
+    if diag2.count('O') == 2 and diag2.count(' ') == 1:
         return diag2.index(' '), 2-diag2.index(' ')  # 勝利への最後の空きセルの位置を返す
 
     return None
@@ -136,4 +136,4 @@ if __name__ == '__main__':
         winner = play_game(ai_model, device)
         results[winner] += 1
 
-    print(f"対戦結果: AIの勝利: {results[1]}, 引き分け: {results[0]}, AIの敗北: {results[2]}")
+    print(f"対戦結果: AIの勝利: {results[2]}, 引き分け: {results[0]}, AIの敗北: {results[1]}")
