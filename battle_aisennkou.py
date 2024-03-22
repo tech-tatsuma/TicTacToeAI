@@ -57,13 +57,13 @@ def ai_move(board, model, device='cpu'):
     # 自分が勝利する手を最優先で選択
     winning_action = find_winning_move(board)
     if winning_action is not None:
-        print(f"Winning move at row, col = {winning_action}")
+        # print(f"Winning move at row, col = {winning_action}")
         return winning_action
 
     # 敵が勝利する手を防ぐ行動を最優先で選択
     prevent_action = prevent_win(board)
     if prevent_action is not None:
-        print(f"Prevent win at row, col = {prevent_action}")
+        # print(f"Prevent win at row, col = {prevent_action}")
         return prevent_action
     
     # 盤面をテンソルに変換し、適切なデバイスに移動
