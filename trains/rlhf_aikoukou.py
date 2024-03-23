@@ -33,7 +33,7 @@ def load_training_state():
         return 0, 0  # ファイルが存在しない場合は初期値を返す
 
 # 変数の初期化
-MEMORY_SIZE = 10000 
+MEMORY_SIZE = 64
 
 # 経験再生バッファで使うためのトランジションを定義
 Transition = namedtuple('Transition',
@@ -117,9 +117,9 @@ def rlhf(num_episodes=100):
     # 保存された学習状態の読み込み
     steps_done, start_episode = load_training_state()
 
-    BATCH_SIZE = 128
+    BATCH_SIZE = 32
     GAMMA = 0.99
-    TARGET_UPDATE = 10
+    TARGET_UPDATE = 5
     steps_done = 0
 
     for episode in range(start_episode, num_episodes):
@@ -162,12 +162,13 @@ def rlhf(num_episodes=100):
                 # 状態と盤面を更新
                 state = next_state
                 board = next_board
-                # パラメータを更新
-                optimize_model(memory, policy_net, target_net, optimizer, BATCH_SIZE, GAMMA, device)
-                torch.save(policy_net.state_dict(), 'policy_net_2_final_weights_rlhf.pt')
 
             # 学習の進行具合を示すフラグを更新
             steps_done += 1
+
+            # パラメータを更新
+            optimize_model(memory, policy_net, target_net, optimizer, BATCH_SIZE, GAMMA, device)
+            torch.save(policy_net.state_dict(), 'policy_net_2_final_weights_rlhf.pt')
 
             # ターンを交代
             current_player = 2 if current_player == 1 else 1

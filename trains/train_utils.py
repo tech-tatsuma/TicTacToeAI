@@ -133,6 +133,8 @@ def optimize_model(memory, policy_net, target_net, optimizer, BATCH_SIZE, GAMMA,
     optimizer.zero_grad() # 勾配を0にリセット
     loss.backward() # バックプロパゲーションを用いて勾配を計算
     optimizer.step() # パラメータを更新
+    print('optimized')
+
 
 def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, device, symbol):
 
@@ -176,7 +178,7 @@ def select_action(state, policy_net, steps_done, EPS_START, EPS_END, EPS_DECAY, 
 
     return torch.tensor([[action]], device=device, dtype=torch.long)
 
-def select_action_rlhf(state, policy_net, device, symbol):
+def select_action_rlhf(state, policy_net, device, symbol, epsilon=0.5):
 
     # stateを3x3の盤面形式に変換
     board = state.view(3, 3).cpu().numpy()
@@ -196,14 +198,18 @@ def select_action_rlhf(state, policy_net, device, symbol):
         return torch.tensor([[action_index]], device=device, dtype=torch.long)
     
 
-    # ランダムな値が閾値よりも大きい場合は，ネットワークの予測に基づく行動を選択
-    with torch.no_grad():
-        q_values = policy_net(state)
-
-    available_actions = [i for i in range(9) if state.flatten()[i] == 0]
-    q_values_available = q_values[0, available_actions]
-
-    # 空のセルの中で一番勝つ確率が高いものを選択
-    action = available_actions[torch.argmax(q_values_available).item()]
-
-    return torch.tensor([[action]], device=device, dtype=torch.long)
+    randam_value = random.random()
+    # ランダムな手を選択する確率
+    if randam_value < epsilon:
+        available_actions = [i for i in range(9) if state.flatten()[i] == 0]
+        action = random.choice(available_actions)
+        return torch.tensor([[action]], device=device, dtype=torch.long)
+    else:
+        # ネットワークの予測に基づく行動を選択
+        with torch.no_grad():
+            q_values = policy_net(state)
+        available_actions = [i for i in range(9) if state.flatten()[i] == 0]
+        q_values_available = q_values[0, available_actions]
+        # 空のセルの中で一番勝つ確率が高いものを選択
+        action = available_actions[torch.argmax(q_values_available).item()]
+        return torch.tensor([[action]], device=device, dtype=torch.long)

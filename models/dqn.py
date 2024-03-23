@@ -5,16 +5,13 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         # 3x3の盤面を入力とする1チャンネルの畳み込み層
         self.conv = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=2, stride=1),  # 出力サイズ: (32, 2, 2)
+            nn.Conv2d(1, 16, kernel_size=2, stride=1),  # 出力サイズ: (32, 2, 2)
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=2, stride=1),  # 出力サイズ: (64, 1, 1)
-            nn.ReLU()
         )
         self.fc = nn.Sequential(
-            nn.Linear(64, 128),  # 畳み込み層の出力を平坦化して全結合層に入力
+            nn.Linear(16 * 2 * 2, 64),  # 畳み込み層の出力を平坦化して全結合層に入力
             nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(128, 9)  # 9つの行動（各セルに置く）
+            nn.Linear(64, 9)  # 9つの行動（各セルに置く）
         )
 
     def forward(self, x):
