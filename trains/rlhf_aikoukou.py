@@ -12,7 +12,7 @@ from trains.train_utils import select_action, optimize_model, ReplayMemory, sele
 from models.dqn import DQN
 
 # 学習状態を保存/読み込むためのファイル名
-STATE_SAVE_PATH = 'training_state.json'
+STATE_SAVE_PATH = 'training_state_koukou.json'
 
 def save_training_state(steps_done, episode):
     """学習の進行状態を外部ファイルに保存する関数"""

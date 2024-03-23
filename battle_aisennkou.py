@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     # AIモデルの初期化と重みの読み込み
     ai_model = DQN().to(device)
-    ai_model.load_state_dict(torch.load('trains/policy_net_1_final_weights.pt', map_location=device))
+    ai_model.load_state_dict(torch.load('trains/policy_net_1_final_weights_rlhf.pt', map_location=device))
 
     board = initialize_board()
     current_player = 1

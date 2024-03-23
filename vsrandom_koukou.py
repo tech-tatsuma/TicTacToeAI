@@ -128,7 +128,7 @@ def play_game(ai_model, device):
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ai_model = DQN().to(device)
-    ai_model.load_state_dict(torch.load('trains/policy_net_2_final_weights.pt', map_location=device))
+    ai_model.load_state_dict(torch.load('trains/policy_net_2_final_weights_rlhf.pt', map_location=device))
 
     results = defaultdict(int)  # 勝敗結果を集計する辞書
 

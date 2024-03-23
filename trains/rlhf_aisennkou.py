@@ -12,7 +12,7 @@ from trains.train_utils import select_action, optimize_model, ReplayMemory, sele
 from models.dqn import DQN
 
 # 学習状態を保存/読み込むためのファイル名
-STATE_SAVE_PATH = 'training_state.json'
+STATE_SAVE_PATH = 'training_state_sennkou.json'
 
 def save_training_state(steps_done, episode):
     """学習の進行状態を外部ファイルに保存する関数"""
@@ -103,9 +103,9 @@ def rlhf(num_episodes=100):
 
     # モデルの初期化
     policy_net = DQN().to(device)
-    policy_net.load_state_dict(torch.load('policy_net_1_final_weights.pt', map_location=device))
+    policy_net.load_state_dict(torch.load('policy_net_1_final_weights_rlhf.pt', map_location=device))
     target_net = DQN().to(device)
-    target_net.load_state_dict(torch.load('target_net_1_final_weights.pt', map_location=device))
+    target_net.load_state_dict(torch.load('policy_net_1_final_weights_rlhf.pt', map_location=device))
     target_net.eval()
 
     # オプティマイザの初期化
