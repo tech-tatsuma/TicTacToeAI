@@ -7,11 +7,11 @@ from models.dqn import DQN
 from trains.train import to_tensor
 
 def random_move(board, player):
-    """プレーヤーが場所をランダムに選択する関数。
-    
+    """Make a random move for a player on the board.
+
     Args:
-        board: 現在の盤面。
-        player: 現在のプレーヤー（1か2）。
+        board: The current state of the board as a list of lists.
+        player: The current player (1 or 2).
     """
     symbol = 'X' if player == 1 else 'O'
     empty_positions = [(r, c) for r in range(len(board)) for c in range(len(board[r])) if board[r][c] == ' ']
@@ -19,89 +19,100 @@ def random_move(board, player):
         row, col = random.choice(empty_positions)
         board[row][col] = symbol
     else:
-        print("盤面が埋まっています。")
+        print("The board is full.")
 
 def prevent_win(board):
     """
-    敵が勝利する手を防ぐ行動を特定する関数。
+    Identifies a move to prevent the opponent from winning.
+    
+    This function checks the board for any potential win situations for the opponent ('O') 
+    and returns a move that blocks the opponent from winning if such a situation is found.
+    
+    Returns:
+        A tuple (row, column) indicating the position to block the opponent's win, 
+        or None if no such position exists.
     """
     for i in range(3):
         row = board[i]
         if row.count('X') == 2 and row.count(' ') == 1:
-            return i, row.index(' ')  # 空きセルの位置を返す
+            return i, row.index(' ') 
         col = [board[j][i] for j in range(3)]
         if col.count('X') == 2 and col.count(' ') == 1:
-            return col.index(' '), i  # 空きセルの位置を返す
+            return col.index(' '), i 
 
-    # 斜めの確認
     diag1 = [board[i][i] for i in range(3)]
     if diag1.count('X') == 2 and diag1.count(' ') == 1:
-        return diag1.index(' '), diag1.index(' ')  # 空きセルの位置を返す
+        return diag1.index(' '), diag1.index(' ') 
 
     diag2 = [board[i][2-i] for i in range(3)]
     if diag2.count('X') == 2 and diag2.count(' ') == 1:
-        return diag2.index(' '), 2-diag2.index(' ')  # 空きセルの位置を返す
+        return diag2.index(' '), 2-diag2.index(' ')
 
     return None
 
 def find_winning_move(board):
     """
-    自分が勝利する手を特定する関数。
+    Identify moves to prevent the opponent from winning.
+    
+    Args:
+        board: The current state of the board as a list of lists.
+    
+    Returns:
+        Tuple containing the row and column of the blocking move, or None if no blocking move is necessary.
     """
     for i in range(3):
         row = board[i]
         if row.count('O') == 2 and row.count(' ') == 1:
-            return i, row.index(' ')  # 勝利への最後の空きセルの位置を返す
+            return i, row.index(' ')
         col = [board[j][i] for j in range(3)]
         if col.count('O') == 2 and col.count(' ') == 1:
-            return col.index(' '), i  # 勝利への最後の空きセルの位置を返す
+            return col.index(' '), i 
 
-    # 斜めの確認
     diag1 = [board[i][i] for i in range(3)]
     if diag1.count('O') == 2 and diag1.count(' ') == 1:
-        return diag1.index(' '), diag1.index(' ')  # 勝利への最後の空きセルの位置を返す
+        return diag1.index(' '), diag1.index(' ') 
 
     diag2 = [board[i][2-i] for i in range(3)]
     if diag2.count('O') == 2 and diag2.count(' ') == 1:
-        return diag2.index(' '), 2-diag2.index(' ')  # 勝利への最後の空きセルの位置を返す
+        return diag2.index(' '), 2-diag2.index(' ')
 
     return None
 
 def ai_move(board, model, device='cpu'):
     """
-    AIが次の行動を決定する関数。
+    Function to determine the next move by AI.
+
+    Args:
+        board: The current state of the board as a list of lists.
+        model: The neural network model to evaluate the best move.
+        device: The device (cpu or cuda) on which to run the model.
+    
+    Returns:
+        A tuple (row, col) indicating the AI's chosen move.
     """
 
-    # 自分が勝利する手を最優先で選択
+    # First, check if there's a move that leads to victory and choose it.
     winning_action = find_winning_move(board)
     if winning_action is not None:
-        # print(f"Winning move at row, col = {winning_action}")
         return winning_action
 
-    # 敵が勝利する手を防ぐ行動を最優先で選択
+    # Next, check if the opponent is about to win and block them.
     prevent_action = prevent_win(board)
     if prevent_action is not None:
-        # print(f"Prevent win at row, col = {prevent_action}")
         return prevent_action
     
-    # 盤面をテンソルに変換し、適切なデバイスに移動
     state = to_tensor(board).to(device)
-    # モデルを評価モードに設定
     model.eval()
 
     with torch.no_grad():
         q_values = model(state)
     
-    # 盤面から利用可能なアクションを取得
     available_actions = [i for i, x in enumerate([cell for row in board for cell in row]) if x == ' ']
 
-    # 利用可能なアクションのQ値のみを抽出
     q_values_available = q_values[0, available_actions]
 
-    # 最もQ値が高いアクションを選択
     action = available_actions[torch.argmax(q_values_available).item()]
 
-    # 選択したアクションを盤面の行と列に変換
     row, col = divmod(action, 3)
     print(f"row, col = {row}, {col}")
     return row, col
@@ -112,16 +123,14 @@ def play_game(ai_model, device):
 
     while True:
         if current_player == 1:
-            # ランダムプレイヤーの手を進める
             random_move(board, current_player)
         else:
-            # AIの手を進める
             row, col = ai_move(board, ai_model, device)
             board[row][col] = 'O'
 
         result = check_winner(board)
         if result != -1:
-            return result  # ゲーム終了時に勝者を返す
+            return result
 
         current_player = 2 if current_player == 1 else 1
 
@@ -130,10 +139,10 @@ if __name__ == '__main__':
     ai_model = DQN().to(device)
     ai_model.load_state_dict(torch.load('trains/policy_net_2_final_weights_rlhf.pt', map_location=device))
 
-    results = defaultdict(int)  # 勝敗結果を集計する辞書
+    results = defaultdict(int) 
 
     for _ in range(1000):
         winner = play_game(ai_model, device)
         results[winner] += 1
 
-    print(f"対戦結果: AIの勝利: {results[2]}, 引き分け: {results[0]}, AIの敗北: {results[1]}")
+    print(f"Match Results: AI wins: {results[2]}, Draws: {results[0]}, AI losses: {results[1]}")
